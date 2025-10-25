@@ -7,8 +7,6 @@ Este projeto, desenvolvido para a disciplina de BI e BIG DATA da FATEC Tatuí, r
 
 O objetivo principal foi ingerir dados de fontes heterogêneas (.csv e .json), aplicar técnicas avançadas de limpeza e transformação para criar um dataset unificado e confiável (camada Silver) e, por fim, extrair insights de negócio através de análises agregadas (camada Gold).
 
-**[➡️ Visualizar o Notebook Interativo no Databricks Community Edition](https://...link-publico-do-seu-notebook)**
-
 ## 2. Arquitetura da Solução
 
 Para garantir a organização, escalabilidade e manutenibilidade do pipeline, foi utilizada a **Arquitetura Medalhão**, uma prática padrão em projetos de dados modernos:
