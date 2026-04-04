@@ -1,70 +1,70 @@
-# databricks-melbourne-housing-etl
-Projeto de ETL e análise com PySpark no Databricks para o mercado imobiliário de Melbourne.
+# Melbourne Housing Market - End-to-End ETL Pipeline (Databricks)
 
-## 1. Introdução e Objetivo
+An end-to-end ETL and data analysis project using **PySpark** on **Databricks** focused on the Melbourne real estate market.
 
-Este projeto, desenvolvido para a disciplina de BI e BIG DATA da FATEC Tatuí, realiza um processo completo de Extração, Transformação e Carga (ETL) e análise de dados do mercado imobiliário da cidade de Melbourne, Austrália.
+## 1. Overview & Objectives
 
-O objetivo principal foi ingerir dados de fontes heterogêneas (.csv e .json), aplicar técnicas avançadas de limpeza e transformação para criar um dataset unificado e confiável (camada Silver) e, por fim, extrair insights de negócio através de análises agregadas (camada Gold).
+Developed as part of the BI & Big Data curriculum at FATEC Tatuí, this project implements a complete Extraction, Transformation, and Load (ETL) process and data analysis of the housing market in Melbourne, Australia.
 
-## 2. Arquitetura da Solução
+The primary goal was to ingest data from heterogeneous sources (.csv and .json), apply advanced cleaning and transformation techniques to create a unified and reliable dataset (**Silver layer**), and finally extract business insights through aggregated analytics (**Gold layer**).
 
-Para garantir a organização, escalabilidade e manutenibilidade do pipeline, foi utilizada a **Arquitetura Medalhão**, uma prática padrão em projetos de dados modernos:
+## 2. Solution Architecture
 
--   **Camada Bronze:** Contém os dados brutos, exatamente como foram recebidos das fontes originais (CSV e JSON).
--   **Camada Silver:** O coração do projeto. Contém os dados limpos, padronizados, unificados e enriquecidos, prontos para a análise.
--   **Camada Gold:** Apresenta os dados agregados e os insights finais que respondem às perguntas de negócio.
+To ensure organization, scalability, and maintainability, the project follows the **Medallion Architecture**, an industry standard for modern data platform design:
 
-## 3. Tecnologias Utilizadas
+- 🥉 **Bronze Layer:** Raw data ingestion exactly as received from the original sources (CSV and JSON).
+- 🥈 **Silver Layer:** The "Source of Truth". Contains cleaned, standardized, unified, and enriched data ready for analysis.
+- 🥇 **Gold Layer:** Business-level aggregates and final insights that answer specific business questions.
 
--   **Plataforma:** Databricks
--   **Linguagem:** Python
--   **Framework:** Apache Spark (PySpark)
--   **Bibliotecas (Investigação Local):** Pandas
 
-## 4. O Processo de ETL (Da Camada Bronze para a Silver)
 
-O processo de transformação foi a etapa mais desafiadora e crítica do projeto, exigindo uma investigação detalhada para identificar a causa raiz dos problemas.
+## 3. Tech Stack
 
-### 4.1. Ingestão e Descoberta de Erro Estrutural
+- **Platform:** Databricks
+- **Language:** Python
+- **Engine:** Apache Spark (PySpark)
+- **Local Investigation:** Pandas (used for initial structural debugging)
 
--   **Ingestão:** Os arquivos `.csv` e `.json` foram carregados na plataforma via Databricks Volumes.
--   **Desafio:** Durante a investigação de erros de conversão, uma análise local com Python/Pandas (cujos scripts estão na pasta `/investigation`) revelou um erro estrutural no arquivo CSV: `Error tokenizing data. C error: Expected 21 fields in line 11, saw 22`.
--   **Solução:** A opção `mode = "DROPMALFORMED"` foi adicionada na leitura do CSV com PySpark para descartar automaticamente a linha corrompida, tornando o pipeline resiliente a erros de formatação na origem.
+## 4. The ETL Process: From Bronze to Silver
 
-### 4.2. O Principal Desafio: O Erro de `CAST` Oculto
+The transformation stage was the most critical part of the project, requiring detailed root-cause analysis to solve structural data issues.
 
-O maior obstáculo do projeto foi um erro persistente de `[CAST_INVALID_INPUT]` que ocorria durante a unificação dos DataFrames.
+### 4.1. Ingestion & Structural Error Discovery
 
--   **Sintoma:** O erro apontava para a conversão de uma data que, visualmente, parecia correta, e persistia mesmo após múltiplas tentativas de correção.
--   **Causa Raiz:** A investigação dos *schemas* revelou a verdadeira causa: uma **inconsistência de tipos de dados**. O Spark inferiu a coluna `date` como tipo `Date` no CSV, mas como `String` no JSON. Ao tentar a união, o Spark forçava uma conversão implícita (e falha) em segundo plano.
--   **Solução Definitiva:** Para resolver o conflito, foi necessário **harmonizar os schemas ANTES da união**. Todas as colunas de ambos os DataFrames foram temporariamente convertidas para `String`. Isso permitiu uma unificação segura e estável, eliminando o erro.
+- **Ingestion:** Files were uploaded via Databricks Volumes.
+- **The Challenge:** During initial testing, a structural error was found in the CSV file. A local investigation script (found in `/investigation`) revealed: `Error tokenizing data. C error: Expected 21 fields in line 11, saw 22`.
+- **Solution:** The PySpark reader was configured with `mode = "DROPMALFORMED"` to automatically discard corrupted lines, making the pipeline resilient to source formatting errors.
 
-### 4.3. Outros Tratamentos Aplicados
+### 4.2. The Main Obstacle: The Hidden `CAST` Error
 
--   **Padronização de Nomes:** Todas as colunas foram renomeadas manualmente para o padrão `snake_case` (ex: `Propertycount` -> `property_count`) para consistência e legibilidade.
--   **Tratamento de Nulos:** Colunas vitais como `BuildingArea` e `YearBuilt` tiveram seus valores nulos preenchidos com a **mediana** do respectivo subúrbio, uma abordagem mais robusta a outliers do que a média.
--   **Engenharia de Features:** Foi criada a coluna `age_of_property` a partir do ano da venda e do ano de construção, enriquecendo o dataset para futuras análises.
+The biggest challenge was a persistent `[CAST_INVALID_INPUT]` error during DataFrame union operations.
 
-## 5. Análises e Insights (Camada Gold)
+- **Symptom:** The error pointed to a date conversion issue that seemed visually correct but persisted after multiple fix attempts.
+- **Root Cause:** A detailed schema investigation revealed **data type inconsistency**. Spark inferred the `date` column as `Date` type in the CSV, but as `String` in the JSON.
+- **Definitive Solution:** To resolve the conflict, I implemented **Schema Harmonization** before the union. All columns from both DataFrames were temporarily cast to `String`, allowing for a stable and safe union, followed by a controlled final casting.
 
-Com o dataset limpo e validado na camada Silver, foram geradas as seguintes análises:
+### 4.3. Data Quality & Feature Engineering
 
-### Análise 1: Variação do Preço/m² para 'Houses' em 2017
+- **Standardization:** Manually renamed all columns to `snake_case` (e.g., `Propertycount` -> `property_count`) for consistency.
+- **Handling Missing Values:** Critical columns like `BuildingArea` and `YearBuilt` had nulls filled with the **median** value of their respective suburb—a more robust approach against outliers than using the mean.
+- **Feature Engineering:** Created the `age_of_property` column based on the sale year and construction year to enrich the dataset for future analysis.
 
-* **Pergunta:** O preço por metro quadrado para casas valorizou ou desvalorizou ao longo de 2017?
-* **Resultado:** ![Resultado da Análise 1](./images/analise1_preco_m2.png)
+## 5. Analytics & Insights (Gold Layer)
 
-### Análise 2: Top 5 Subúrbios por Mediana de Preço
+With the Silver layer validated, the following business questions were answered:
 
-* **Pergunta:** Quais os subúrbios mais caros, considerando apenas aqueles com um mercado relevante (mínimo de 50 imóveis listados)?
-* **Resultado:** ![Resultado da Análise 2](./images/analise2_top5_suburbios.png)
+### Analysis 1: Price/sqm Variation for 'Houses' in 2017
+* **Insight:** Monitoring the appreciation or depreciation of house prices per square meter throughout the year.
+* **Result:** ![Analysis 1](./images/analise1_preco_m2.png)
 
-### Análise 3: Evolução Anual dos Preços
+### Analysis 2: Top 5 Suburbs by Median Price
+* **Insight:** Identifying the most expensive suburbs, filtering for those with a relevant market volume (min. 50 listings).
+* **Result:** ![Analysis 2](./images/analise2_top5_suburbios.png)
 
-* **Pergunta (Adaptada):** Qual a tendência do preço médio dos imóveis ao longo dos anos?
-* **Resultado:** ![Resultado da Análise 3](./images/analise3_evolucao_preco.png)
+### Analysis 3: Annual Price Evolution
+* **Insight:** Visualizing the average property price trend over the years.
+* **Result:** ![Analysis 3](./images/analise3_evolucao_preco.png)
 
-## 6. Conclusão
+## 6. Conclusion
 
-Este projeto demonstrou um ciclo completo de ETL em um cenário real, destacando que os desafios mais complexos muitas vezes estão ocultos sob sintomas enganosos. A investigação detalhada dos schemas e a harmonização dos dados antes da união foram cruciais para o sucesso e a estabilidade do pipeline.
+This project demonstrates a complete ETL lifecycle in a real-world scenario. It highlights that complex data challenges are often hidden under misleading symptoms. Detailed schema investigation and data harmonization before unification were crucial to the success and stability of this Big Data pipeline.
